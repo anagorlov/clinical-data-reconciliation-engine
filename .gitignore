@@ -1,0 +1,13 @@
+# .gitignore
+# EHR Clinical Data Reconciliation Engine
+# By: Anastasiya Gorlov
+# these files will NOT be uploaded to GitHub
+# keeps our secrets safe!
+
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_StoreEHR_ClinicalData.ipynb
+frontend/screenshots/
+.DS_Store

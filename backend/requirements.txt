@@ -1,0 +1,11 @@
+# requirements.txt
+# EHR Clinical Data Reconciliation Engine
+# By: Anastasiya Gorlov
+# all the libraries our backend needs to run
+# install with: pip install -r requirements.txt
+
+fastapi==0.115.0
+uvicorn==0.30.6
+anthropic==0.20.0
+python-dotenv==1.0.1
+pytest==8.3.2

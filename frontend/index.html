@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EHR Reconciliation Engine</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0fdf4;
+      min-height: 100vh;
+      padding: 0 0 40px 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #4ade80, #86efac, #bbf7d0);
+      padding: 30px 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .leaves-top {
+      font-size: 20px;
+      letter-spacing: 6px;
+      opacity: 0.4;
+      margin-bottom: 10px;
+    }
+
+    .leaves-bottom {
+      font-size: 18px;
+      letter-spacing: 6px;
+      opacity: 0.3;
+      margin-top: 10px;
+    }
+
+    header h1 {
+      color: white;
+      font-size: 26px;
+      font-weight: 900;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    header p {
+      color: white;
+      font-size: 13px;
+      margin-top: 6px;
+      opacity: 0.9;
+      font-weight: 600;
+    }
+
+    .container {
+      max-width: 1050px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      padding: 10px 24px;
+      border: 2px solid black;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      background: white;
+      color: black;
+    }
+
+    .tab-btn.active {
+      background: black;
+      color: white;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      border: 1px solid #d1fae5;
+    }
+
+    .card h2 {
+      color: black;
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-family: monospace;
+      font-size: 13px;
+      background: #fafafa;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      background: #fafafa;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .btn {
+      padding: 10px 22px;
+      border: 2px solid black;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .btn-primary { background: black; color: white; }
+    .btn-approve { background: white; color: #16a34a; border-color: #16a34a; }
+    .btn-reject  { background: white; color: #dc2626; border-color: #dc2626; }
+
+    .med-name {
+      font-family: monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: #166534;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+
+    .score-bar {
+      height: 10px;
+      background: #f0f0f0;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 6px 0 12px;
+    }
+
+    .score-fill { height: 100%; border-radius: 5px; }
+    .green  { background: #4ade80; }
+    .yellow { background: #fbbf24; }
+    .red    { background: #f87171; }
+
+    .issue { padding: 8px 12px; border-radius: 8px; margin: 5px 0; font-size: 13px; }
+    .issue.high   { background: #fff5f5; border-left: 3px solid #dc2626; }
+    .issue.medium { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .issue.low    { background: #f0fdf4; border-left: 3px solid #4ade80; }
+
+    .loading  { text-align: center; padding: 30px; color: #888; font-size: 14px; }
+    .error    { background: #fff5f5; color: #dc2626; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px; }
+    .approved { background: #f0fdf4; color: #16a34a; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; margin-top: 10px; border: 1px solid #bbf7d0; }
+    .rejected { background: #fff5f5; color: #dc2626; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; margin-top: 10px; border: 1px solid #fecaca; }
+
+    .reasoning {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #444;
+      background: #f9fafb;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin: 8px 0;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 14px 0 6px;
+    }
+
+    .safety-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 8px 0;
+    }
+
+    .overall-score {
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .overall-score .number {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .overall-score .label {
+      font-size: 13px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .action-row { display: flex; gap: 10px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="leaves-top">🌿 🍃 🌱 🍀 🌿 🍃 🌱 🍀 🌿 🍃 🌱 🍀</div>
+  <h1>🌿 EHR Clinical Data Reconciliation Engine</h1>
+  <p>Powered by Claude AI &nbsp;|&nbsp; Author: Anastasiya Gorlov</p>
+  <div class="leaves-bottom">🍃 🌱 🍀 🌿 🍃 🌱 🍀 🌿 🍃 🌱 🍀 🌿</div>
+</header>
+
+<div class="container">
+
+  <div class="tab-buttons">
+    <button class="tab-btn active" onclick="switchTab('reconcile', this)">💊 Medication Reconciliation</button>
+    <button class="tab-btn" onclick="switchTab('validate', this)">📋 Data Quality Validator</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div id="panel-reconcile" class="panel active">
+    <div class="card">
+      <h2>Input: Conflicting Records</h2>
+      <label>API Key</label>
+      <input type="text" id="key1" value="dev-key-123"/>
+      <label>Request Body (JSON)</label>
+      <textarea id="reconcile-input" rows="17">{
+  "patient_context": {
+    "age": 67,
+    "conditions": ["Type 2 Diabetes", "Hypertension"],
+    "recent_labs": {"eGFR": 45}
+  },
+  "sources": [
+    {
+      "system": "Hospital EHR",
+      "medication": "Metformin 1000mg twice daily",
+      "last_updated": "2024-10-15",
+      "source_reliability": "high"
+    },
+    {
+      "system": "Primary Care",
+      "medication": "Metformin 500mg twice daily",
+      "last_updated": "2025-01-20",
+      "source_reliability": "high"
+    },
+    {
+      "system": "Pharmacy",
+      "medication": "Metformin 1000mg daily",
+      "last_filled": "2025-01-25",
+      "source_reliability": "medium"
+    }
+  ]
+}</textarea>
+      <button class="btn btn-primary" onclick="runReconcile()">▶ Run Reconciliation</button>
+    </div>
+    <div class="card" id="result-reconcile">
+      <h2>Results</h2>
+      <p style="color:#aaa;font-size:13px">Submit a request to see results here.</p>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div id="panel-validate" class="panel">
+    <div class="card">
+      <h2>Input: Patient Record</h2>
+      <label>API Key</label>
+      <input type="text" id="key2" value="dev-key-123"/>
+      <label>Patient Record (JSON)</label>
+      <textarea id="validate-input" rows="17">{
+  "demographics": {"name": "John Doe", "dob": "1955-03-15", "gender": "M"},
+  "medications": ["Metformin 500mg", "Lisinopril 10mg"],
+  "allergies": [],
+  "conditions": ["Type 2 Diabetes"],
+  "vital_signs": {"blood_pressure": "340/180", "heart_rate": 72},
+  "last_updated": "2024-06-15"
+}</textarea>
+      <button class="btn btn-primary" onclick="runValidate()">▶ Validate Quality</button>
+    </div>
+    <div class="card" id="result-validate">
+      <h2>Results</h2>
+      <p style="color:#aaa;font-size:13px">Submit a record to see results here.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = 'http://localhost:8000';
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  function getColor(score) {
+    if (score >= 0.75 || score >= 70) return 'green';
+    if (score >= 0.5  || score >= 40) return 'yellow';
+    return 'red';
+  }
+
+  function getTextColor(c) {
+    if (c === 'green')  return '#16a34a';
+    if (c === 'yellow') return '#d97706';
+    return '#dc2626';
+  }
+
+  async function runReconcile() {
+    const key = document.getElementById('key1').value;
+    const resultEl = document.getElementById('result-reconcile');
+    let payload;
+    try { payload = JSON.parse(document.getElementById('reconcile-input').value); }
+    catch(e) { resultEl.innerHTML = '<div class="error">Invalid JSON: ' + e.message + '</div>'; return; }
+
+    resultEl.innerHTML = '<div class="loading">🌿 Analyzing with Claude AI...</div>';
+
+    try {
+      const res = await fetch(API + '/api/reconcile/medication', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'x-api-key': key},
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+      const data = await res.json();
+
+      const pct   = Math.round((data.confidence_score || 0) * 100);
+      const color = getColor(data.confidence_score || 0);
+      const safe  = (data.clinical_safety_check || '').toUpperCase().includes('PASSED');
+      const actions = (data.recommended_actions || []).map(a => '<li style="margin:4px 0">' + a + '</li>').join('');
+
+      resultEl.innerHTML = `
+        <h2>Reconciliation Result</h2>
+        <div class="med-name">💊 ${data.reconciled_medication || '—'}</div>
+        <div class="safety-badge" style="background:${safe?'#f0fdf4':'#fff5f5'};color:${safe?'#16a34a':'#dc2626'};border:1px solid ${safe?'#bbf7d0':'#fecaca'}">
+          ${safe ? '✓ Safety Check Passed' : '⚠ Safety Flagged'}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:10px">
+          <span style="color:#888">Confidence Score</span>
+          <span style="color:${getTextColor(color)};font-weight:800">${pct}%</span>
+        </div>
+        <div class="score-bar"><div class="score-fill ${color}" style="width:${pct}%"></div></div>
+        <div class="section-label">Clinical Reasoning</div>
+        <div class="reasoning">${data.reasoning || '—'}</div>
+        <div class="section-label">Recommended Actions</div>
+        <ul style="padding-left:18px;font-size:13px;color:#444;line-height:1.8">${actions}</ul>
+        <div class="action-row">
+          <button class="btn btn-approve" onclick="document.getElementById('decision').innerHTML='<div class=approved>🌿 Approved and recorded!</div>'">✓ Approve</button>
+          <button class="btn btn-reject"  onclick="document.getElementById('decision').innerHTML='<div class=rejected>✗ Rejected. Please review manually.</div>'">✗ Reject</button>
+        </div>
+        <div id="decision"></div>`;
+
+    } catch(e) {
+      resultEl.innerHTML = '<div class="error">Error: ' + e.message + '</div>';
+    }
+  }
+
+  async function runValidate() {
+    const key = document.getElementById('key2').value;
+    const resultEl = document.getElementById('result-validate');
+    let payload;
+    try { payload = JSON.parse(document.getElementById('validate-input').value); }
+    catch(e) { resultEl.innerHTML = '<div class="error">Invalid JSON: ' + e.message + '</div>'; return; }
+
+    resultEl.innerHTML = '<div class="loading">🌿 Analyzing data quality...</div>';
+
+    try {
+      const res = await fetch(API + '/api/validate/data-quality', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'x-api-key': key},
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+      const data = await res.json();
+
+      const score = data.overall_score || 0;
+      const color = getColor(score);
+      const bgColor = score >= 70 ? '#f0fdf4' : score >= 40 ? '#fffbeb' : '#fff5f5';
+
+      const breakdownHtml = Object.entries(data.breakdown || {}).map(([k, v]) => `
+        <div style="margin:8px 0">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+            <span style="text-transform:capitalize">${k.replace(/_/g,' ')}</span>
+            <span style="font-weight:800;color:${getTextColor(getColor(v))}">${v}</span>
+          </div>
+          <div class="score-bar"><div class="score-fill ${getColor(v)}" style="width:${v}%"></div></div>
+        </div>`).join('');
+
+      const issuesHtml = (data.issues_detected || []).map(i => `
+        <div class="issue ${i.severity}">
+          <strong>${i.field}</strong> <span style="opacity:0.5;font-size:11px">(${i.severity})</span><br>
+          ${i.issue}
+        </div>`).join('');
+
+      resultEl.innerHTML = `
+        <h2>Data Quality Report</h2>
+        <div class="overall-score" style="background:${bgColor}">
+          <div class="number" style="color:${getTextColor(color)}">${score}</div>
+          <div class="label">Overall Quality Score / 100</div>
+        </div>
+        ${breakdownHtml}
+        <div class="section-label">Issues Detected (${(data.issues_detected||[]).length})</div>
+        ${issuesHtml || '<p style="color:#16a34a;font-size:13px">✓ No issues detected!</p>'}
+        ${data.summary ? '<p style="color:#888;font-size:13px;font-style:italic;margin-top:12px">' + data.summary + '</p>' : ''}`;
+
+    } catch(e) {
+      resultEl.innerHTML = '<div class="error">Error: ' + e.message + '</div>';
+    }
+  }
+</script>
+</body>
+</html>
