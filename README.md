@@ -1,5 +1,10 @@
 # Clinical Data Reconciliation Engine
 
+## Screenshots
+
+![Medication Reconciliation](frontend/screenshots/reconcile.png)
+![Data Quality Validator](frontend/screenshots/validate.png)
+
 Author: Anastasiya Gorlov  
 Date: March 2026  
 Assessment: Full Stack Developer - EHR Integration Intern  
@@ -15,6 +20,15 @@ In real healthcare systems, patient data comes from multiple sources (hospital, 
 The system uses Claude AI for reasoning along with basic rule-based validation.
 
 ---
+
+## Screenshots
+
+### Medication Reconciliation
+![Medication Reconciliation](frontend/screenshots/reconcile.png)
+
+### Data Quality Validator
+![Data Quality Validator](frontend/screenshots/validate.png)
+
 
 ## How to Run Locally
 
