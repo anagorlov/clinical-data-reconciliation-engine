@@ -1,10 +1,5 @@
 # Clinical Data Reconciliation Engine
 
-## Screenshots
-
-![Medication Reconciliation](frontend/screenshots/reconcile.png)
-![Data Quality Validator](frontend/screenshots/validate.png)
-
 Author: Anastasiya Gorlov  
 Date: March 2026  
 Assessment: Full Stack Developer - EHR Integration Intern  
